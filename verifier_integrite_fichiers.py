@@ -16,6 +16,7 @@ def traiter_dossier(
     Traite tous les fichiers d'un dossier dont le nom contient `motif`.
     Vérifie l'intégrité des données et génère des fichiers par année + un fichier global.
     Si une ligne a plus de colonnes que l'en-tête, les colonnes supplémentaires sont ignorées.
+    Les lignes en doublon sont ignorées sans générer d'erreur.
 
     Args:
         dossier: Chemin du dossier contenant les fichiers.
@@ -111,16 +112,10 @@ def traiter_dossier(
                     })
                     continue
 
-                # Vérifier les doublons
+                # Ignorer les doublons sans générer d'erreur
                 ligne_str = delimiter.join(ligne)
                 if ligne_str in lignes_en_double:
-                    erreurs.append({
-                        "fichier": fichier,
-                        "ligne": i + 1,
-                        "type": "doublon",
-                        "details": f"Ligne dupliquée: {ligne_str[:50]}...",
-                    })
-                    continue
+                    continue  # Ignorer la ligne en doublon
                 lignes_en_double.add(ligne_str)
 
                 # Extraire l'année et stocker les données
