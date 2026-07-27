@@ -15,8 +15,8 @@ def traiter_dossier(
     """
     Traite tous les fichiers d'un dossier dont le nom contient `motif`.
     Vérifie l'intégrité des données et génère des fichiers par année + un fichier global.
-    Utilise les lignes 2 et 3 comme en-tête combiné.
-    Si une ligne a plus de colonnes que l'en-tête, les colonnes supplémentaires sont ignorées.
+    Utilise la ligne 2 ou 3 (la plus longue) pour définir la longueur attendue.
+    Ajoute les lignes 2 et 3 comme en-tête dans chaque fichier de sortie.
     Les lignes en doublon sont ignorées sans générer d'erreur.
 
     Args:
@@ -46,7 +46,8 @@ def traiter_dossier(
     toutes_donnees = []
     lignes_en_double = set()
     erreurs = []
-    en_tete = None
+    en_tete_ligne2 = None
+    en_tete_ligne3 = None
     num_colonnes_attendu = None
 
     # Traiter chaque fichier
@@ -62,12 +63,12 @@ def traiter_dossier(
             if not lignes_fichier:
                 continue
 
-            # Utiliser les lignes 2 et 3 comme en-tête (index 1 et 2)
+            # Utiliser les lignes 2 et 3 pour définir la longueur attendue
             if len(lignes_fichier) >= 3:
                 en_tete_ligne2 = lignes_fichier[1]
                 en_tete_ligne3 = lignes_fichier[2]
-                en_tete = en_tete_ligne2 + en_tete_ligne3
-                num_colonnes_attendu = len(en_tete)
+                # Prendre la longueur maximale entre la ligne 2 et la ligne 3
+                num_colonnes_attendu = max(len(en_tete_ligne2), len(en_tete_ligne3))
             else:
                 print(f"Fichier {fichier} : pas assez de lignes pour définir l'en-tête (nécessite au moins 3 lignes).")
                 continue
@@ -78,10 +79,10 @@ def traiter_dossier(
                 if not ligne or all(cell.strip() == "" for cell in ligne):
                     continue
 
-                # Si la ligne a plus de colonnes que l'en-tête, tronquer à num_colonnes_attendu
+                # Si la ligne a plus de colonnes que la longueur attendue, tronquer
                 if len(ligne) > num_colonnes_attendu:
                     ligne = ligne[:num_colonnes_attendu]
-                # Si la ligne a moins de colonnes que l'en-tête, signaler une erreur
+                # Si la ligne a moins de colonnes que la longueur attendue, signaler une erreur
                 elif len(ligne) < num_colonnes_attendu:
                     erreurs.append({
                         "fichier": fichier,
@@ -113,7 +114,7 @@ def traiter_dossier(
                     try:
                         float(valeur_strip)
                     except ValueError:
-                        valeurs_invalides.append(f"Colonne {j + 1} ({en_tete[j]}): '{valeur_strip}'")
+                        valeurs_invalides.append(f"Colonne {j + 1}: '{valeur_strip}'")
 
                 if valeurs_invalides:
                     erreurs.append({
@@ -136,7 +137,7 @@ def traiter_dossier(
                 toutes_donnees.append(ligne)
 
     # Écrire les fichiers de sortie
-    if en_tete is None:
+    if en_tete_ligne2 is None or en_tete_ligne3 is None:
         print("Aucune donnée valide trouvée.")
         return
 
@@ -144,9 +145,9 @@ def traiter_dossier(
     fichier_global = os.path.join(dossier_sortie, f"{motif}_all.csv")
     with open(fichier_global, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f, delimiter=delimiter, quotechar=quotechar)
-        # Écrire les deux lignes d'en-tête
-        writer.writerow(lignes_fichier[1])
-        writer.writerow(lignes_fichier[2])
+        # Écrire les lignes 2 et 3 comme en-tête
+        writer.writerow(en_tete_ligne2)
+        writer.writerow(en_tete_ligne3)
         writer.writerows(toutes_donnees)
     print(f"Fichier global écrit: {fichier_global}")
 
@@ -155,9 +156,9 @@ def traiter_dossier(
         fichier_annee = os.path.join(dossier_sortie, f"{motif}_{annee}.csv")
         with open(fichier_annee, "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f, delimiter=delimiter, quotechar=quotechar)
-            # Écrire les deux lignes d'en-tête
-            writer.writerow(lignes_fichier[1])
-            writer.writerow(lignes_fichier[2])
+            # Écrire les lignes 2 et 3 comme en-tête
+            writer.writerow(en_tete_ligne2)
+            writer.writerow(en_tete_ligne3)
             writer.writerows(donnees)
         print(f"Fichier pour {annee} écrit: {fichier_annee}")
 
