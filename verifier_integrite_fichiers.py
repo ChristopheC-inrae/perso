@@ -15,7 +15,7 @@ def traiter_dossier(
     """
     Traite tous les fichiers d'un dossier dont le nom contient `motif`.
     Vérifie l'intégrité des données et génère des fichiers par année + un fichier global.
-    Utilise la ligne 2 ou 3 (la plus longue) pour définir la longueur attendue.
+    Utilise la longueur de la ligne 2 comme référence pour la longueur attendue.
     Ajoute les lignes 2 et 3 comme en-tête dans chaque fichier de sortie.
     Les lignes en doublon sont ignorées sans générer d'erreur.
 
@@ -63,12 +63,12 @@ def traiter_dossier(
             if not lignes_fichier:
                 continue
 
-            # Utiliser les lignes 2 et 3 pour définir la longueur attendue
+            # Utiliser la ligne 2 pour définir la longueur attendue
             if len(lignes_fichier) >= 3:
                 en_tete_ligne2 = lignes_fichier[1]
                 en_tete_ligne3 = lignes_fichier[2]
-                # Prendre la longueur maximale entre la ligne 2 et la ligne 3
-                num_colonnes_attendu = max(len(en_tete_ligne2), len(en_tete_ligne3))
+                # Prendre la longueur de la ligne 2 comme référence
+                num_colonnes_attendu = len(en_tete_ligne2)
             else:
                 print(f"Fichier {fichier} : pas assez de lignes pour définir l'en-tête (nécessite au moins 3 lignes).")
                 continue
