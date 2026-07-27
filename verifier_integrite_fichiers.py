@@ -15,6 +15,7 @@ def traiter_dossier(
     """
     Traite tous les fichiers d'un dossier dont le nom contient `motif`.
     Vérifie l'intégrité des données et génère des fichiers par année + un fichier global.
+    Utilise les lignes 2 et 3 comme en-tête combiné.
     Si une ligne a plus de colonnes que l'en-tête, les colonnes supplémentaires sont ignorées.
     Les lignes en doublon sont ignorées sans générer d'erreur.
 
@@ -55,15 +56,26 @@ def traiter_dossier(
 
         with open(chemin, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter=delimiter, quotechar=quotechar)
-            for i, ligne in enumerate(reader):
+            lignes_fichier = list(reader)
+
+            # Ignorer les fichiers vides
+            if not lignes_fichier:
+                continue
+
+            # Utiliser les lignes 2 et 3 comme en-tête (index 1 et 2)
+            if len(lignes_fichier) >= 3:
+                en_tete_ligne2 = lignes_fichier[1]
+                en_tete_ligne3 = lignes_fichier[2]
+                en_tete = en_tete_ligne2 + en_tete_ligne3
+                num_colonnes_attendu = len(en_tete)
+            else:
+                print(f"Fichier {fichier} : pas assez de lignes pour définir l'en-tête (nécessite au moins 3 lignes).")
+                continue
+
+            # Traiter les lignes de données (à partir de la ligne 4, index 3)
+            for i, ligne in enumerate(lignes_fichier[3:], start=4):
                 # Ignorer les lignes vides
                 if not ligne or all(cell.strip() == "" for cell in ligne):
-                    continue
-
-                # Déterminer l'en-tête (première ligne non vide)
-                if en_tete is None:
-                    en_tete = ligne
-                    num_colonnes_attendu = len(en_tete)
                     continue
 
                 # Si la ligne a plus de colonnes que l'en-tête, tronquer à num_colonnes_attendu
@@ -132,7 +144,9 @@ def traiter_dossier(
     fichier_global = os.path.join(dossier_sortie, f"{motif}_all.csv")
     with open(fichier_global, "w", encoding="utf-8", newline="") as f:
         writer = csv.writer(f, delimiter=delimiter, quotechar=quotechar)
-        writer.writerow(en_tete)
+        # Écrire les deux lignes d'en-tête
+        writer.writerow(lignes_fichier[1])
+        writer.writerow(lignes_fichier[2])
         writer.writerows(toutes_donnees)
     print(f"Fichier global écrit: {fichier_global}")
 
@@ -141,7 +155,9 @@ def traiter_dossier(
         fichier_annee = os.path.join(dossier_sortie, f"{motif}_{annee}.csv")
         with open(fichier_annee, "w", encoding="utf-8", newline="") as f:
             writer = csv.writer(f, delimiter=delimiter, quotechar=quotechar)
-            writer.writerow(en_tete)
+            # Écrire les deux lignes d'en-tête
+            writer.writerow(lignes_fichier[1])
+            writer.writerow(lignes_fichier[2])
             writer.writerows(donnees)
         print(f"Fichier pour {annee} écrit: {fichier_annee}")
 
